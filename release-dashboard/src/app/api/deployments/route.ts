@@ -108,8 +108,10 @@ export async function GET(request: NextRequest) {
       branch: null,
       deployed_at: null,
       commits_behind: null,
+      commits_ahead: null,
       staleness_score: 0,
       compare_url: null,
+      ahead_compare_url: null,
       error:
         result.reason instanceof Error
           ? result.reason.message

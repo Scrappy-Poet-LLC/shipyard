@@ -64,6 +64,7 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
 
   const color = getStalenessColor(data.staleness_score);
   const commitsBehind = data.commits_behind ?? 0;
+  const commitsAhead = data.commits_ahead ?? 0;
   const isUpToDate = commitsBehind === 0;
 
   const CardWrapper = data.compare_url ? "a" : "div";
@@ -100,18 +101,32 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
               {data.github_repo}
             </p>
           </div>
-          {isUpToDate ? (
-            <div className="ml-3 flex-shrink-0 rounded-full bg-gradient-to-r from-blue-500 to-sky-400 px-3 py-1 text-xs font-bold text-white shadow-sm">
-              Up to date
-            </div>
-          ) : (
-            <div
-              className="ml-3 flex-shrink-0 rounded-full px-3 py-1 text-xs font-bold text-white"
-              style={{ backgroundColor: color }}
-            >
-              {commitsBehind} behind
-            </div>
-          )}
+          <div className="ml-3 flex flex-shrink-0 items-center gap-2">
+            {commitsAhead > 0 && (
+              <a
+                href={data.ahead_compare_url!}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="rounded-full bg-purple-100 px-3 py-1 text-xs font-bold text-purple-700 shadow-sm transition-colors hover:bg-purple-200"
+                title="View commits ahead of default branch"
+              >
+                {commitsAhead} ahead
+              </a>
+            )}
+            {isUpToDate ? (
+              <div className="rounded-full bg-gradient-to-r from-blue-500 to-sky-400 px-3 py-1 text-xs font-bold text-white shadow-sm">
+                Up to date
+              </div>
+            ) : (
+              <div
+                className="rounded-full px-3 py-1 text-xs font-bold text-white"
+                style={{ backgroundColor: color }}
+              >
+                {commitsBehind} behind
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-4">

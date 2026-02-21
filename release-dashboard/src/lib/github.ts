@@ -102,8 +102,10 @@ export async function fetchDeploymentInfo(
     branch: null,
     deployed_at: null,
     commits_behind: null,
+    commits_ahead: null,
     staleness_score: 0,
     compare_url: null,
+    ahead_compare_url: null,
     error: null,
   };
 
@@ -137,7 +139,11 @@ export async function fetchDeploymentInfo(
     });
 
     const commitsBehind = comparison.ahead_by;
+    const commitsAhead = comparison.behind_by;
     const compareUrl = `https://github.com/${owner}/${repo}/compare/${deployedSha}...${service.default_branch}`;
+    const aheadCompareUrl = commitsAhead > 0
+      ? `https://github.com/${owner}/${repo}/compare/${service.default_branch}...${deployedSha}`
+      : null;
 
     return {
       ...baseResult,
@@ -150,8 +156,10 @@ export async function fetchDeploymentInfo(
       branch: latestRun.head_branch ?? null,
       deployed_at: latestRun.updated_at,
       commits_behind: commitsBehind,
+      commits_ahead: commitsAhead,
       staleness_score: getStalenessScore(commitsBehind, commitCeiling),
       compare_url: compareUrl,
+      ahead_compare_url: aheadCompareUrl,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
