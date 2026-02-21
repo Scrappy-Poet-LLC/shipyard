@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Release Environment Dashboard
 
-## Getting Started
+An internal status-page-style dashboard that shows the current deployment state of every tracked service. For each service, you can see what version is deployed, who authored the deploy commit, and how stale it is compared to the default branch.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Frontend:** Next.js (App Router) with TypeScript and Tailwind CSS
+- **Hosting:** Vercel
+- **Backend/Config:** Supabase (Postgres + Auth)
+- **Deploy Data:** GitHub API via org-level GitHub App
+
+## Setup
+
+### 1. Supabase
+
+Create a Supabase project and run the migration in `supabase/migration.sql` to create the schema and seed the environments table.
+
+Disable sign-ups in your Supabase Auth settings (Dashboard > Auth > Settings) since users are invited by admins.
+
+### 2. GitHub App
+
+Create a GitHub App in your org with:
+
+- **Setup URL:** `https://your-domain.com/api/github/setup`
+- **Webhook URL:** `https://your-domain.com/api/github/webhook`
+- **Webhook Secret:** A random string (store as `GITHUB_WEBHOOK_SECRET`)
+- **Permissions:** Read access to Actions, Contents, and Metadata
+
+Install the app on your org and select the repositories you want to track.
+
+### 3. Environment Variables
+
+Copy `.env.local.example` to `.env.local` and fill in the values:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+GITHUB_APP_ID=
+GITHUB_APP_PRIVATE_KEY=
+GITHUB_WEBHOOK_SECRET=
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 4. Run
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## How It Works
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. The GitHub App installation redirect auto-discovers repositories and detects deploy workflows by matching filenames against environment keywords (`prod`, `stage`, `sandbox`).
+2. When a user loads the dashboard, the app reads service configuration from Supabase, then fetches the latest successful workflow run and commit comparison from the GitHub API for each service.
+3. Staleness is computed as `commits_behind / commit_ceiling` and displayed as a continuous color gradient from bright green (fresh) to pale brown (stale).
+4. Sort preference persists via URL query parameter and browser cookie.
