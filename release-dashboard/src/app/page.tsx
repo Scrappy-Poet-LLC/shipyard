@@ -9,6 +9,8 @@ import type {
   SortOption,
 } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 async function getEnvironments(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>
 ): Promise<Environment[]> {
