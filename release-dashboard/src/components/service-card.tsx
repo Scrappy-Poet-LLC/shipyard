@@ -64,12 +64,25 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
 
   const color = getStalenessColor(data.staleness_score);
   const commitsBehind = data.commits_behind ?? 0;
+  const isUpToDate = commitsBehind === 0;
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+    <div
+      className={`relative overflow-hidden rounded-xl border shadow-sm transition-shadow hover:shadow-md ${
+        isUpToDate
+          ? "border-amber-300/70 bg-gradient-to-br from-amber-50/80 via-yellow-50/50 to-white ring-1 ring-amber-200/50"
+          : "border-gray-200 bg-white"
+      }`}
+      style={isUpToDate ? { boxShadow: "0 0 12px rgba(251, 191, 36, 0.15)" } : undefined}
+    >
       <div
-        className="absolute inset-y-0 left-0 w-1.5"
-        style={{ backgroundColor: color }}
+        className={`absolute inset-y-0 left-0 ${isUpToDate ? "w-2" : "w-1.5"}`}
+        style={{
+          backgroundColor: isUpToDate ? undefined : color,
+          background: isUpToDate
+            ? "linear-gradient(to bottom, #f59e0b, #fbbf24, #f59e0b)"
+            : undefined,
+        }}
       />
       <div className="py-5 pl-6 pr-5">
         <div className="flex items-start justify-between">
@@ -81,14 +94,18 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
               {data.github_repo}
             </p>
           </div>
-          <div
-            className="ml-3 flex-shrink-0 rounded-full px-3 py-1 text-xs font-bold text-white"
-            style={{ backgroundColor: color }}
-          >
-            {commitsBehind === 0
-              ? "Up to date"
-              : `${commitsBehind} behind`}
-          </div>
+          {isUpToDate ? (
+            <div className="ml-3 flex-shrink-0 rounded-full bg-gradient-to-r from-amber-400 to-yellow-400 px-3 py-1 text-xs font-bold text-amber-900 shadow-sm">
+              Up to date
+            </div>
+          ) : (
+            <div
+              className="ml-3 flex-shrink-0 rounded-full px-3 py-1 text-xs font-bold text-white"
+              style={{ backgroundColor: color }}
+            >
+              {commitsBehind} behind
+            </div>
+          )}
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-4">
