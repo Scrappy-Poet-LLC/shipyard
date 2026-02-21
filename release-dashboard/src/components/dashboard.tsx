@@ -4,6 +4,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import type { DeploymentInfo, Environment, SortOption } from "@/lib/types";
 import { ServiceCard } from "./service-card";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type DashboardProps = {
   deployments: DeploymentInfo[];
@@ -97,6 +98,19 @@ export function Dashboard({
             </h1>
 
             <div className="flex items-center gap-3">
+              <button
+                onClick={async () => {
+                  const supabase = createSupabaseBrowserClient();
+                  await supabase.auth.signOut();
+                  router.push("/login");
+                }}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-500 shadow-sm transition hover:bg-gray-50 hover:text-gray-700"
+              >
+                Sign out
+              </button>
+
+              <div className="h-5 w-px bg-gray-300" />
+
               <div className="flex items-center gap-2">
                 <label
                   htmlFor="env-select"
