@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { DeploymentInfo, Environment, SortOption } from "@/lib/types";
 import { ServiceCard } from "./service-card";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -58,20 +58,10 @@ export function Dashboard({
   currentEnvironment,
   currentSort,
 }: DashboardProps) {
+  const [activeSort, setActiveSort] = useState<SortOption>(currentSort);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-
-  const updateParams = useCallback(
-    (updates: Record<string, string>) => {
-      const params = new URLSearchParams(searchParams.toString());
-      for (const [key, value] of Object.entries(updates)) {
-        params.set(key, value);
-      }
-      router.push(`${pathname}?${params.toString()}`);
-    },
-    [router, pathname, searchParams]
-  );
 
   function handleEnvironmentChange(slug: string) {
     document.cookie = `env=${slug};path=/;max-age=31536000`;
@@ -81,13 +71,16 @@ export function Dashboard({
   }
 
   function handleSortChange(sort: SortOption) {
+    setActiveSort(sort);
     document.cookie = `sort=${sort};path=/;max-age=31536000`;
-    updateParams({ sort });
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("sort", sort);
+    window.history.replaceState(null, "", `${pathname}?${params.toString()}`);
   }
 
   const sortedDeployments = useMemo(
-    () => sortDeployments(deployments, currentSort),
-    [deployments, currentSort]
+    () => sortDeployments(deployments, activeSort),
+    [deployments, activeSort]
   );
 
   return (
@@ -145,7 +138,7 @@ export function Dashboard({
                 </label>
                 <select
                   id="sort-select"
-                  value={currentSort}
+                  value={activeSort}
                   onChange={(e) =>
                     handleSortChange(e.target.value as SortOption)
                   }
