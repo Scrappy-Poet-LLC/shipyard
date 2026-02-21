@@ -46,9 +46,7 @@ export type DeploymentInfo = {
   branch: string | null;
   deployed_at: string | null;
   commits_behind: number | null;
-  commits_ahead: number | null;
   staleness_score: number;
   compare_url: string | null;
-  ahead_compare_url: string | null;
   error: string | null;
 };
