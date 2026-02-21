@@ -47,5 +47,6 @@ export type DeploymentInfo = {
   deployed_at: string | null;
   commits_behind: number | null;
   staleness_score: number;
+  compare_url: string | null;
   error: string | null;
 };

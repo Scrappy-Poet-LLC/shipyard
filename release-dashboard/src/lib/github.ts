@@ -103,6 +103,7 @@ export async function fetchDeploymentInfo(
     deployed_at: null,
     commits_behind: null,
     staleness_score: 0,
+    compare_url: null,
     error: null,
   };
 
@@ -136,6 +137,7 @@ export async function fetchDeploymentInfo(
     });
 
     const commitsBehind = comparison.ahead_by;
+    const compareUrl = `https://github.com/${owner}/${repo}/compare/${deployedSha}...${service.default_branch}`;
 
     return {
       ...baseResult,
@@ -149,6 +151,7 @@ export async function fetchDeploymentInfo(
       deployed_at: latestRun.updated_at,
       commits_behind: commitsBehind,
       staleness_score: getStalenessScore(commitsBehind, commitCeiling),
+      compare_url: compareUrl,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

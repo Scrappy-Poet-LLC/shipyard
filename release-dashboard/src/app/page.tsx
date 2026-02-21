@@ -158,6 +158,7 @@ export default async function DashboardPage({
         deployed_at: null,
         commits_behind: null,
         staleness_score: 0,
+        compare_url: null,
         error:
           result.reason instanceof Error
             ? result.reason.message

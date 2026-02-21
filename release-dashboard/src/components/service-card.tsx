@@ -66,13 +66,19 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
   const commitsBehind = data.commits_behind ?? 0;
   const isUpToDate = commitsBehind === 0;
 
+  const CardWrapper = data.compare_url ? "a" : "div";
+  const linkProps = data.compare_url
+    ? { href: data.compare_url, target: "_blank", rel: "noopener noreferrer" }
+    : {};
+
   return (
-    <div
-      className={`relative overflow-hidden rounded-xl border shadow-sm transition-shadow hover:shadow-md ${
+    <CardWrapper
+      {...linkProps}
+      className={`group relative block overflow-hidden rounded-xl border shadow-sm transition-shadow hover:shadow-md ${
         isUpToDate
           ? "border-blue-300/70 bg-gradient-to-br from-blue-50/80 via-sky-50/50 to-white ring-1 ring-blue-200/50"
           : "border-gray-200 bg-white"
-      }`}
+      } ${data.compare_url ? "cursor-pointer" : ""}`}
       style={isUpToDate ? { boxShadow: "0 0 12px rgba(59, 130, 246, 0.12)" } : undefined}
     >
       <div
@@ -87,7 +93,7 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
       <div className="py-5 pl-6 pr-5">
         <div className="flex items-start justify-between">
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-gray-900 truncate">
+            <h3 className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
               {data.display_name}
             </h3>
             <p className="mt-0.5 text-xs text-gray-500 font-mono truncate">
@@ -135,14 +141,21 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
           </div>
         </div>
 
-        {data.branch && (
-          <div className="mt-3">
+        <div className="mt-3 flex items-center justify-between">
+          {data.branch ? (
             <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-mono text-gray-600">
               {data.branch}
             </span>
-          </div>
-        )}
+          ) : (
+            <span />
+          )}
+          {data.compare_url && (
+            <span className="text-xs text-gray-400 opacity-0 transition-opacity group-hover:opacity-100">
+              View on GitHub &rarr;
+            </span>
+          )}
+        </div>
       </div>
-    </div>
+    </CardWrapper>
   );
 }
