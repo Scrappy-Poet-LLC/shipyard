@@ -70,17 +70,17 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
     <div
       className={`relative overflow-hidden rounded-xl border shadow-sm transition-shadow hover:shadow-md ${
         isUpToDate
-          ? "border-amber-300/70 bg-gradient-to-br from-amber-50/80 via-yellow-50/50 to-white ring-1 ring-amber-200/50"
+          ? "border-blue-300/70 bg-gradient-to-br from-blue-50/80 via-sky-50/50 to-white ring-1 ring-blue-200/50"
           : "border-gray-200 bg-white"
       }`}
-      style={isUpToDate ? { boxShadow: "0 0 12px rgba(251, 191, 36, 0.15)" } : undefined}
+      style={isUpToDate ? { boxShadow: "0 0 12px rgba(59, 130, 246, 0.12)" } : undefined}
     >
       <div
         className={`absolute inset-y-0 left-0 ${isUpToDate ? "w-2" : "w-1.5"}`}
         style={{
           backgroundColor: isUpToDate ? undefined : color,
           background: isUpToDate
-            ? "linear-gradient(to bottom, #f59e0b, #fbbf24, #f59e0b)"
+            ? "linear-gradient(to bottom, #3b82f6, #60a5fa, #3b82f6)"
             : undefined,
         }}
       />
@@ -95,7 +95,7 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
             </p>
           </div>
           {isUpToDate ? (
-            <div className="ml-3 flex-shrink-0 rounded-full bg-gradient-to-r from-amber-400 to-yellow-400 px-3 py-1 text-xs font-bold text-amber-900 shadow-sm">
+            <div className="ml-3 flex-shrink-0 rounded-full bg-gradient-to-r from-blue-500 to-sky-400 px-3 py-1 text-xs font-bold text-white shadow-sm">
               Up to date
             </div>
           ) : (
