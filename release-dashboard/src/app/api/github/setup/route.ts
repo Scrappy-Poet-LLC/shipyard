@@ -107,7 +107,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (setupAction === "install") {
-      return NextResponse.redirect(new URL("/", request.url));
+      const forwardedProto = request.headers.get("x-forwarded-proto") ?? "http";
+      const host = request.headers.get("host") ?? "localhost:3000";
+      return NextResponse.redirect(new URL("/", `${forwardedProto}://${host}`));
     }
 
     return NextResponse.json({ success: true, repos: repos.length });
