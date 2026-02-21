@@ -77,8 +77,7 @@ export function Dashboard({
     document.cookie = `env=${slug};path=/;max-age=31536000`;
     const params = new URLSearchParams(searchParams.toString());
     params.set("env", slug);
-    router.refresh();
-    router.push(`${pathname}?${params.toString()}`);
+    window.location.href = `${pathname}?${params.toString()}`;
   }
 
   function handleSortChange(sort: SortOption) {
