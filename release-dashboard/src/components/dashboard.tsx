@@ -382,7 +382,7 @@ export function Dashboard({
         )}
       </main>
 
-      <footer className="fixed bottom-4 left-4">
+      <footer className="mx-auto max-w-7xl px-4 pb-6 sm:px-6 lg:px-8">
         <button
           onClick={async () => {
             const supabase = createSupabaseBrowserClient();
