@@ -33,7 +33,7 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
 
   if (data.error) {
     return (
-      <div className="relative min-w-0 overflow-hidden rounded-xl border border-red-200 bg-white shadow-sm dark:border-red-800 dark:bg-gray-800">
+      <div className="relative h-full min-w-0 overflow-hidden rounded-xl border border-red-200 bg-white shadow-sm dark:border-red-800 dark:bg-gray-800">
         <div className="absolute inset-y-0 left-0 w-1.5 bg-red-400 dark:bg-red-500" />
         <div className="py-4 pl-5 pr-4 sm:py-5 sm:pl-6 sm:pr-5">
           <div className="flex items-start justify-between">
@@ -76,7 +76,7 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
   return (
     <CardWrapper
       {...linkProps}
-      className={`group relative block min-w-0 overflow-hidden rounded-xl border shadow-sm transition-shadow hover:shadow-md ${
+      className={`group relative block h-full min-w-0 overflow-hidden rounded-xl border shadow-sm transition-shadow hover:shadow-md ${
         isUpToDate
           ? "border-blue-300/70 bg-gradient-to-br from-blue-50/80 via-sky-50/50 to-white ring-1 ring-blue-200/50 dark:border-blue-500/50 dark:from-blue-950/60 dark:via-sky-950/40 dark:to-gray-900 dark:ring-blue-500/30"
           : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
