@@ -5,6 +5,7 @@ import { Dashboard } from "@/components/dashboard";
 import type {
   DeploymentInfo,
   Environment,
+  LayoutOption,
   ServiceWithEnvironment,
   SortOption,
 } from "@/lib/types";
@@ -83,7 +84,7 @@ async function getServicesForEnvironment(
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ env?: string; sort?: string }>;
+  searchParams: Promise<{ env?: string; sort?: string; layout?: string }>;
 }) {
   const params = await searchParams;
   const cookieStore = await cookies();
@@ -125,6 +126,16 @@ export default async function DashboardPage({
       : sortCookie && validSorts.includes(sortCookie)
         ? sortCookie
         : "deployed";
+
+  const layoutParam = params.layout as LayoutOption | undefined;
+  const layoutCookie = cookieStore.get("layout")?.value as LayoutOption | undefined;
+  const validLayouts: LayoutOption[] = ["comfortable", "compact"];
+  const currentLayout: LayoutOption =
+    layoutParam && validLayouts.includes(layoutParam)
+      ? layoutParam
+      : layoutCookie && validLayouts.includes(layoutCookie)
+        ? layoutCookie
+        : "comfortable";
 
   const { services, installationId } = await getServicesForEnvironment(
     supabase,
@@ -173,6 +184,7 @@ export default async function DashboardPage({
       environments={environments}
       currentEnvironment={currentEnvironment}
       currentSort={currentSort}
+      currentLayout={currentLayout}
     />
   );
 }

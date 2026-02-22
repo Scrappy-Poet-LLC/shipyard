@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { DeploymentInfo, Environment, SortOption } from "@/lib/types";
+import type { DeploymentInfo, Environment, LayoutOption, SortOption } from "@/lib/types";
 import { ServiceCard } from "./service-card";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { timeAgo } from "@/lib/time";
@@ -12,6 +12,7 @@ type DashboardProps = {
   environments: Environment[];
   currentEnvironment: string;
   currentSort: SortOption;
+  currentLayout: LayoutOption;
 };
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -58,6 +59,7 @@ export function Dashboard({
   environments,
   currentEnvironment,
   currentSort,
+  currentLayout,
 }: DashboardProps) {
   const cache = useRef<Map<string, DeploymentInfo[]>>(
     new Map([[currentEnvironment, initialDeployments]])
@@ -68,6 +70,7 @@ export function Dashboard({
   const [deployments, setDeployments] = useState(initialDeployments);
   const [activeEnv, setActiveEnv] = useState(currentEnvironment);
   const [activeSort, setActiveSort] = useState<SortOption>(currentSort);
+  const [activeLayout, setActiveLayout] = useState<LayoutOption>(currentLayout);
   const [loading, setLoading] = useState(false);
   const [lastFetched, setLastFetched] = useState<Date>(new Date());
   const [, setTick] = useState(0);
@@ -140,6 +143,12 @@ export function Dashboard({
     setActiveSort(sort);
     document.cookie = `sort=${sort};path=/;max-age=31536000`;
     updateUrl({ sort });
+  }
+
+  function handleLayoutChange(layout: LayoutOption) {
+    setActiveLayout(layout);
+    document.cookie = `layout=${layout};path=/;max-age=31536000`;
+    updateUrl({ layout });
   }
 
   const sortedDeployments = useMemo(
@@ -242,14 +251,37 @@ export function Dashboard({
                   ))}
                 </select>
               </div>
+
+              <div className="h-5 w-px bg-gray-300" />
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleLayoutChange("comfortable")}
+                  title="Comfortable (2 columns)"
+                  className={`rounded-md p-1.5 transition ${activeLayout === "comfortable" ? "bg-gray-200 text-gray-700" : "text-gray-400 hover:text-gray-600"}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h6v14H4zM14 5h6v14h-6z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => handleLayoutChange("compact")}
+                  title="Compact (3 columns)"
+                  className={`rounded-md p-1.5 transition ${activeLayout === "compact" ? "bg-gray-200 text-gray-700" : "text-gray-400 hover:text-gray-600"}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h4v14H4zM10 5h4v14h-4zM16 5h4v14h-4z" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {loading ? (
-          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
+          <div className={`grid gap-4 sm:grid-cols-1 ${activeLayout === "compact" ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-2"}`}>
             {Array.from({ length: Math.max(sortedDeployments.length, 4) }).map((_, i) => (
               <div
                 key={i}
@@ -297,7 +329,7 @@ export function Dashboard({
             </p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
+          <div className={`grid gap-4 sm:grid-cols-1 ${activeLayout === "compact" ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-2"}`}>
             {sortedDeployments.map((deployment) => (
               <ServiceCard
                 key={`${activeEnv}-${deployment.service_id}`}

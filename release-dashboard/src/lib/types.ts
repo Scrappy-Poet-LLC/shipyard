@@ -35,6 +35,8 @@ export type ServiceWithEnvironment = Service & {
 
 export type SortOption = "deployed" | "alpha" | "staleness";
 
+export type LayoutOption = "comfortable" | "compact";
+
 export type DeploymentInfo = {
   service_id: string;
   display_name: string;
