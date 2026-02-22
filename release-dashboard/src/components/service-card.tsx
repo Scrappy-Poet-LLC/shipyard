@@ -33,7 +33,7 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
     return (
       <div className="relative overflow-hidden rounded-xl border border-red-200 bg-white shadow-sm">
         <div className="absolute inset-y-0 left-0 w-1.5 bg-red-400" />
-        <div className="py-5 pl-6 pr-5">
+        <div className="py-4 pl-5 pr-4 sm:py-5 sm:pl-6 sm:pr-5">
           <div className="flex items-start justify-between">
             <div>
               <h3 className="font-semibold text-gray-900">
@@ -90,7 +90,7 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
             : undefined,
         }}
       />
-      <div className="py-5 pl-6 pr-5">
+      <div className="py-4 pl-5 pr-4 sm:py-5 sm:pl-6 sm:pr-5">
         <div className="flex items-start justify-between">
           <div className="min-w-0 flex-1">
             <h3 className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
@@ -114,7 +114,7 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
           )}
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-4">
+        <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-4">
           <div>
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">
               Commit

@@ -179,17 +179,17 @@ export function Dashboard({
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold text-gray-900">
+        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <h1 className="text-lg font-bold text-gray-900 whitespace-nowrap sm:text-xl">
                 Release Dashboard
               </h1>
               <button
                 onClick={handleRefresh}
                 disabled={loading}
                 title="Refresh deployment data"
-                className="rounded-lg border border-gray-300 bg-white p-1.5 text-gray-400 shadow-sm transition hover:bg-gray-50 hover:text-gray-600 disabled:opacity-50"
+                className="flex-shrink-0 rounded-lg border border-gray-300 bg-white p-1.5 text-gray-400 shadow-sm transition hover:bg-gray-50 hover:text-gray-600 disabled:opacity-50"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -206,103 +206,104 @@ export function Dashboard({
                   />
                 </svg>
               </button>
-              <span className="text-xs text-gray-400">
+              <span className="hidden text-xs text-gray-400 whitespace-nowrap sm:inline">
                 Fetched {timeAgo(lastFetched.toISOString())}
               </span>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <div className="flex items-center gap-1 sm:hidden">
+              <button
+                onClick={() => handleLayoutChange("comfortable")}
+                title="Comfortable (2 columns)"
+                className={`rounded-md p-1.5 transition ${activeLayout === "comfortable" ? "bg-gray-200 text-gray-700" : "text-gray-400 hover:text-gray-600"}`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h6v14H4zM14 5h6v14h-6z" />
                 </svg>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Find service..."
-                  className="w-40 rounded-lg border border-gray-300 bg-white py-1.5 pl-8 pr-3 text-sm text-gray-700 shadow-sm placeholder:text-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
-                />
-              </div>
+              </button>
+              <button
+                onClick={() => handleLayoutChange("compact")}
+                title="Compact (3 columns)"
+                className={`rounded-md p-1.5 transition ${activeLayout === "compact" ? "bg-gray-200 text-gray-700" : "text-gray-400 hover:text-gray-600"}`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h4v14H4zM10 5h4v14h-4zM16 5h4v14h-4z" />
+                </svg>
+              </button>
+            </div>
+          </div>
 
-              <div className="h-5 w-px bg-gray-300" />
+          <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="relative flex-grow sm:flex-grow-0">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Find service..."
+                className="w-full rounded-lg border border-gray-300 bg-white py-1.5 pl-8 pr-3 text-sm text-gray-700 shadow-sm placeholder:text-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 sm:w-40"
+              />
+            </div>
 
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="env-select"
-                  className="text-sm font-medium text-gray-500"
-                >
-                  Environment
-                </label>
-                <select
-                  id="env-select"
-                  value={activeEnv}
-                  onChange={(e) => handleEnvironmentChange(e.target.value)}
-                  disabled={loading}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 disabled:opacity-50"
-                >
-                  {environments.map((env) => (
-                    <option key={env.slug} value={env.slug}>
-                      {env.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <select
+              id="env-select"
+              value={activeEnv}
+              onChange={(e) => handleEnvironmentChange(e.target.value)}
+              disabled={loading}
+              aria-label="Environment"
+              className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 disabled:opacity-50"
+            >
+              {environments.map((env) => (
+                <option key={env.slug} value={env.slug}>
+                  {env.name}
+                </option>
+              ))}
+            </select>
 
-              <div className="h-5 w-px bg-gray-300" />
+            <select
+              id="sort-select"
+              value={activeSort}
+              onChange={(e) =>
+                handleSortChange(e.target.value as SortOption)
+              }
+              aria-label="Sort"
+              className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
 
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="sort-select"
-                  className="text-sm font-medium text-gray-500"
-                >
-                  Sort
-                </label>
-                <select
-                  id="sort-select"
-                  value={activeSort}
-                  onChange={(e) =>
-                    handleSortChange(e.target.value as SortOption)
-                  }
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
-                >
-                  {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="h-5 w-px bg-gray-300" />
-
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => handleLayoutChange("comfortable")}
-                  title="Comfortable (2 columns)"
-                  className={`rounded-md p-1.5 transition ${activeLayout === "comfortable" ? "bg-gray-200 text-gray-700" : "text-gray-400 hover:text-gray-600"}`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h6v14H4zM14 5h6v14h-6z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => handleLayoutChange("compact")}
-                  title="Compact (3 columns)"
-                  className={`rounded-md p-1.5 transition ${activeLayout === "compact" ? "bg-gray-200 text-gray-700" : "text-gray-400 hover:text-gray-600"}`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h4v14H4zM10 5h4v14h-4zM16 5h4v14h-4z" />
-                  </svg>
-                </button>
-              </div>
+            <div className="hidden items-center gap-1 sm:flex">
+              <button
+                onClick={() => handleLayoutChange("comfortable")}
+                title="Comfortable (2 columns)"
+                className={`rounded-md p-1.5 transition ${activeLayout === "comfortable" ? "bg-gray-200 text-gray-700" : "text-gray-400 hover:text-gray-600"}`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h6v14H4zM14 5h6v14h-6z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => handleLayoutChange("compact")}
+                title="Compact (3 columns)"
+                className={`rounded-md p-1.5 transition ${activeLayout === "compact" ? "bg-gray-200 text-gray-700" : "text-gray-400 hover:text-gray-600"}`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h4v14H4zM10 5h4v14h-4zM16 5h4v14h-4z" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
