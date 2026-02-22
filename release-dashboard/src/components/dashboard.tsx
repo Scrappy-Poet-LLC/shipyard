@@ -300,7 +300,7 @@ export function Dashboard({
           <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
             {sortedDeployments.map((deployment) => (
               <ServiceCard
-                key={deployment.service_id}
+                key={`${activeEnv}-${deployment.service_id}`}
                 deployment={deployment}
                 environmentSlug={activeEnv}
               />
