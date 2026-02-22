@@ -1,8 +1,12 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DeploymentInfo, Environment, LayoutOption, SortOption } from "@/lib/types";
+import { moveFailuresToBottom, getMatchedServiceIds, sortDeployments } from "@/lib/deployments";
+import { useDeploymentData } from "@/hooks/use-deployment-data";
+import { useSearchShortcut } from "@/hooks/use-search-shortcut";
+import { useUrlSync } from "@/hooks/use-url-sync";
 import { ServiceCard } from "./service-card";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { timeAgo } from "@/lib/time";
@@ -21,60 +25,6 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "staleness", label: "Staleness" },
 ];
 
-function searchMatch(query: string, target: string): boolean {
-  return target.toLowerCase().includes(query);
-}
-
-function sortDeployments(
-  deployments: DeploymentInfo[],
-  sort: SortOption
-): DeploymentInfo[] {
-  const sorted = [...deployments];
-
-  switch (sort) {
-    case "deployed":
-      sorted.sort((a, b) => {
-        if (!a.deployed_at && !b.deployed_at) return 0;
-        if (!a.deployed_at) return 1;
-        if (!b.deployed_at) return -1;
-        return (
-          new Date(b.deployed_at).getTime() -
-          new Date(a.deployed_at).getTime()
-        );
-      });
-      break;
-    case "alpha":
-      sorted.sort((a, b) =>
-        a.display_name.localeCompare(b.display_name)
-      );
-      break;
-    case "staleness":
-      sorted.sort(
-        (a, b) => (b.commits_behind ?? 0) - (a.commits_behind ?? 0)
-      );
-      break;
-  }
-
-  return sorted;
-}
-
-function moveFailuresToBottom(
-  deployments: DeploymentInfo[]
-): DeploymentInfo[] {
-  const healthy: DeploymentInfo[] = [];
-  const failures: DeploymentInfo[] = [];
-
-  for (const deployment of deployments) {
-    if (deployment.error) {
-      failures.push(deployment);
-    } else {
-      healthy.push(deployment);
-    }
-  }
-
-  return [...healthy, ...failures];
-}
-
 export function Dashboard({
   deployments: initialDeployments,
   environments,
@@ -82,96 +32,36 @@ export function Dashboard({
   currentSort,
   currentLayout,
 }: DashboardProps) {
-  const cache = useRef<Map<string, DeploymentInfo[]>>(
-    new Map([[currentEnvironment, initialDeployments]])
-  );
-  const fetchedAt = useRef<Map<string, Date>>(
-    new Map([[currentEnvironment, new Date()]])
-  );
-  const [deployments, setDeployments] = useState(initialDeployments);
-  const [activeEnv, setActiveEnv] = useState(currentEnvironment);
+  const [, setTick] = useState(0);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const updateUrl = useUrlSync();
+  const {
+    deployments,
+    activeEnv,
+    loading,
+    lastFetched,
+    handleEnvironmentChange: changeEnvironment,
+    handleRefresh,
+  } = useDeploymentData(initialDeployments, currentEnvironment);
+
   const [activeSort, setActiveSort] = useState<SortOption>(currentSort);
   const [activeLayout, setActiveLayout] = useState<LayoutOption>(currentLayout);
-  const [loading, setLoading] = useState(false);
-  const [lastFetched, setLastFetched] = useState<Date>(new Date());
   const [searchQuery, setSearchQuery] = useState("");
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const [, setTick] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => setTick((t) => t + 1), 30_000);
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === "f") {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  useSearchShortcut(searchInputRef);
+
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
-  const updateUrl = useCallback(
-    (updates: Record<string, string>) => {
-      const params = new URLSearchParams(searchParams.toString());
-      for (const [key, value] of Object.entries(updates)) {
-        params.set(key, value);
-      }
-      window.history.replaceState(null, "", `${pathname}?${params.toString()}`);
-    },
-    [pathname, searchParams]
+  const handleEnvironmentChange = useCallback(
+    (slug: string) => changeEnvironment(slug, updateUrl),
+    [changeEnvironment, updateUrl]
   );
-
-  async function fetchDeployments(slug: string): Promise<DeploymentInfo[]> {
-    const res = await fetch(`/api/deployments?env=${slug}`);
-    if (!res.ok) return [];
-    return res.json();
-  }
-
-  async function handleEnvironmentChange(slug: string) {
-    setActiveEnv(slug);
-    document.cookie = `env=${slug};path=/;max-age=31536000`;
-    updateUrl({ env: slug });
-
-    const cached = cache.current.get(slug);
-    if (cached) {
-      setDeployments(cached);
-      setLastFetched(fetchedAt.current.get(slug) ?? new Date());
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const data = await fetchDeployments(slug);
-      const now = new Date();
-      cache.current.set(slug, data);
-      fetchedAt.current.set(slug, now);
-      setDeployments(data);
-      setLastFetched(now);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleRefresh() {
-    setLoading(true);
-    try {
-      const data = await fetchDeployments(activeEnv);
-      const now = new Date();
-      cache.current.set(activeEnv, data);
-      fetchedAt.current.set(activeEnv, now);
-      setDeployments(data);
-      setLastFetched(now);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   function handleSortChange(sort: SortOption) {
     setActiveSort(sort);
@@ -190,20 +80,10 @@ export function Dashboard({
     [deployments, activeSort]
   );
 
-  const normalizedQuery = searchQuery.toLowerCase().trim();
-  const matchedIds = useMemo(() => {
-    if (!normalizedQuery) return null;
-    const ids = new Set<string>();
-    for (const d of sortedDeployments) {
-      if (
-        searchMatch(normalizedQuery, d.display_name) ||
-        searchMatch(normalizedQuery, d.github_repo)
-      ) {
-        ids.add(d.service_id);
-      }
-    }
-    return ids;
-  }, [sortedDeployments, normalizedQuery]);
+  const matchedIds = useMemo(
+    () => getMatchedServiceIds(sortedDeployments, searchQuery),
+    [sortedDeployments, searchQuery]
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
