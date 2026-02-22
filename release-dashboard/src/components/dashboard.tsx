@@ -223,26 +223,6 @@ export function Dashboard({
               </span>
             </div>
 
-            <div className="flex items-center gap-1 sm:hidden">
-              <button
-                onClick={() => handleLayoutChange("compact")}
-                title="Compact (3 columns)"
-                className={`rounded-md p-1.5 transition ${activeLayout === "compact" ? "bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200" : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"}`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h4v14H4zM10 5h4v14h-4zM16 5h4v14h-4z" />
-                </svg>
-              </button>
-              <button
-                onClick={() => handleLayoutChange("comfortable")}
-                title="Comfortable (2 columns)"
-                className={`rounded-md p-1.5 transition ${activeLayout === "comfortable" ? "bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200" : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"}`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h6v14H4zM14 5h6v14h-6z" />
-                </svg>
-              </button>
-            </div>
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
@@ -303,7 +283,7 @@ export function Dashboard({
               ))}
             </select>
 
-            <div className="hidden items-center gap-1 sm:flex">
+            <div className="hidden items-center gap-1 lg:flex">
               <button
                 onClick={() => handleLayoutChange("compact")}
                 title="Compact (3 columns)"
