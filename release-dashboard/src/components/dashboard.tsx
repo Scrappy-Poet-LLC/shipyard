@@ -264,7 +264,6 @@ export function Dashboard({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Escape") {
-                      setSearchQuery("");
                       searchInputRef.current?.blur();
                     }
                   }}
