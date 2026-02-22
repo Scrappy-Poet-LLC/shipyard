@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { DeploymentInfo, Environment, SortOption } from "@/lib/types";
 import { ServiceCard } from "./service-card";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -58,6 +58,9 @@ export function Dashboard({
   currentEnvironment,
   currentSort,
 }: DashboardProps) {
+  const cache = useRef<Map<string, DeploymentInfo[]>>(
+    new Map([[currentEnvironment, initialDeployments]])
+  );
   const [deployments, setDeployments] = useState(initialDeployments);
   const [activeEnv, setActiveEnv] = useState(currentEnvironment);
   const [activeSort, setActiveSort] = useState<SortOption>(currentSort);
@@ -77,18 +80,39 @@ export function Dashboard({
     [pathname, searchParams]
   );
 
+  async function fetchDeployments(slug: string): Promise<DeploymentInfo[]> {
+    const res = await fetch(`/api/deployments?env=${slug}`);
+    if (!res.ok) return [];
+    return res.json();
+  }
+
   async function handleEnvironmentChange(slug: string) {
     setActiveEnv(slug);
-    setLoading(true);
     document.cookie = `env=${slug};path=/;max-age=31536000`;
     updateUrl({ env: slug });
 
+    const cached = cache.current.get(slug);
+    if (cached) {
+      setDeployments(cached);
+      return;
+    }
+
+    setLoading(true);
     try {
-      const res = await fetch(`/api/deployments?env=${slug}`);
-      if (res.ok) {
-        const data: DeploymentInfo[] = await res.json();
-        setDeployments(data);
-      }
+      const data = await fetchDeployments(slug);
+      cache.current.set(slug, data);
+      setDeployments(data);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleRefresh() {
+    setLoading(true);
+    try {
+      const data = await fetchDeployments(activeEnv);
+      cache.current.set(activeEnv, data);
+      setDeployments(data);
     } finally {
       setLoading(false);
     }
@@ -110,9 +134,32 @@ export function Dashboard({
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h1 className="text-xl font-bold text-gray-900">
-              Release Dashboard
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-bold text-gray-900">
+                Release Dashboard
+              </h1>
+              <button
+                onClick={handleRefresh}
+                disabled={loading}
+                title="Refresh deployment data"
+                className="rounded-lg border border-gray-300 bg-white p-1.5 text-gray-400 shadow-sm transition hover:bg-gray-50 hover:text-gray-600 disabled:opacity-50"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+              </button>
+            </div>
 
             <div className="flex items-center gap-3">
               <button
