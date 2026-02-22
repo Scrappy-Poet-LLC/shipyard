@@ -1,10 +1,11 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DeploymentInfo, Environment, SortOption } from "@/lib/types";
 import { ServiceCard } from "./service-card";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { timeAgo } from "@/lib/time";
 
 type DashboardProps = {
   deployments: DeploymentInfo[];
@@ -61,10 +62,20 @@ export function Dashboard({
   const cache = useRef<Map<string, DeploymentInfo[]>>(
     new Map([[currentEnvironment, initialDeployments]])
   );
+  const fetchedAt = useRef<Map<string, Date>>(
+    new Map([[currentEnvironment, new Date()]])
+  );
   const [deployments, setDeployments] = useState(initialDeployments);
   const [activeEnv, setActiveEnv] = useState(currentEnvironment);
   const [activeSort, setActiveSort] = useState<SortOption>(currentSort);
   const [loading, setLoading] = useState(false);
+  const [lastFetched, setLastFetched] = useState<Date>(new Date());
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 30_000);
+    return () => clearInterval(interval);
+  }, []);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -94,14 +105,18 @@ export function Dashboard({
     const cached = cache.current.get(slug);
     if (cached) {
       setDeployments(cached);
+      setLastFetched(fetchedAt.current.get(slug) ?? new Date());
       return;
     }
 
     setLoading(true);
     try {
       const data = await fetchDeployments(slug);
+      const now = new Date();
       cache.current.set(slug, data);
+      fetchedAt.current.set(slug, now);
       setDeployments(data);
+      setLastFetched(now);
     } finally {
       setLoading(false);
     }
@@ -111,8 +126,11 @@ export function Dashboard({
     setLoading(true);
     try {
       const data = await fetchDeployments(activeEnv);
+      const now = new Date();
       cache.current.set(activeEnv, data);
+      fetchedAt.current.set(activeEnv, now);
       setDeployments(data);
+      setLastFetched(now);
     } finally {
       setLoading(false);
     }
@@ -159,6 +177,9 @@ export function Dashboard({
                   />
                 </svg>
               </button>
+              <span className="text-xs text-gray-400">
+                Fetched {timeAgo(lastFetched.toISOString())}
+              </span>
             </div>
 
             <div className="flex items-center gap-3">
