@@ -133,9 +133,9 @@ export default async function DashboardPage({
   const currentLayout: LayoutOption =
     layoutParam && validLayouts.includes(layoutParam)
       ? layoutParam
-      : layoutCookie && validLayouts.includes(layoutCookie)
+        : layoutCookie && validLayouts.includes(layoutCookie)
         ? layoutCookie
-        : "comfortable";
+        : "compact";
 
   const { services, installationId } = await getServicesForEnvironment(
     supabase,
