@@ -58,6 +58,23 @@ function sortDeployments(
   return sorted;
 }
 
+function moveFailuresToBottom(
+  deployments: DeploymentInfo[]
+): DeploymentInfo[] {
+  const healthy: DeploymentInfo[] = [];
+  const failures: DeploymentInfo[] = [];
+
+  for (const deployment of deployments) {
+    if (deployment.error) {
+      failures.push(deployment);
+    } else {
+      healthy.push(deployment);
+    }
+  }
+
+  return [...healthy, ...failures];
+}
+
 export function Dashboard({
   deployments: initialDeployments,
   environments,
@@ -169,7 +186,7 @@ export function Dashboard({
   }
 
   const sortedDeployments = useMemo(
-    () => sortDeployments(deployments, activeSort),
+    () => moveFailuresToBottom(sortDeployments(deployments, activeSort)),
     [deployments, activeSort]
   );
 
@@ -192,7 +209,7 @@ export function Dashboard({
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm dark:border-gray-700 dark:bg-slate-900/80">
         <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
             <div className="flex min-w-0 items-center gap-2">
               <h1 className="whitespace-nowrap text-lg font-bold text-gray-900 sm:text-xl dark:text-gray-100">
                 Release Dashboard
@@ -222,7 +239,6 @@ export function Dashboard({
                 Fetched {timeAgo(lastFetched.toISOString())}
               </span>
             </div>
-
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
