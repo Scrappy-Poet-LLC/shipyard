@@ -85,12 +85,15 @@ export function Dashboard({
     [sortedDeployments, searchQuery]
   );
 
+  const envName =
+    environments.find((e) => e.slug === activeEnv)?.name ?? activeEnv;
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm dark:border-gray-700 dark:bg-slate-900/80">
-        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex min-w-0 items-center gap-2">
+        <div className="relative mx-auto max-w-7xl px-4 py-3 sm:px-6 md:pr-48 lg:px-8 lg:pr-52">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               <h1 className="whitespace-nowrap text-lg font-bold text-gray-900 sm:text-xl dark:text-gray-100">
                 Release Dashboard
               </h1>
@@ -118,6 +121,12 @@ export function Dashboard({
               <span className="hidden whitespace-nowrap text-xs text-gray-400 sm:inline dark:text-gray-500">
                 Fetched {timeAgo(lastFetched.toISOString())}
               </span>
+            </div>
+            <div
+              className="absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-xl border-2 border-gray-300 bg-gray-100 px-5 py-2.5 text-xl font-bold uppercase tracking-wider text-gray-800 shadow-md md:block sm:right-6 lg:right-8 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+              aria-label={`Environment: ${envName}`}
+            >
+              {envName}
             </div>
           </div>
 
@@ -154,7 +163,7 @@ export function Dashboard({
               onChange={(e) => handleEnvironmentChange(e.target.value)}
               disabled={loading}
               aria-label="Environment"
-              className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-green-400 dark:focus:ring-green-400/20"
+              className="select-chevron rounded-lg border border-gray-300 bg-white py-1.5 pl-3 text-sm font-medium text-gray-700 shadow-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-green-400 dark:focus:ring-green-400/20"
             >
               {environments.map((env) => (
                 <option key={env.slug} value={env.slug}>
@@ -170,7 +179,7 @@ export function Dashboard({
                 handleSortChange(e.target.value as SortOption)
               }
               aria-label="Sort"
-              className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-green-400 dark:focus:ring-green-400/20"
+              className="select-chevron rounded-lg border border-gray-300 bg-white py-1.5 pl-3 text-sm font-medium text-gray-700 shadow-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-green-400 dark:focus:ring-green-400/20"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
