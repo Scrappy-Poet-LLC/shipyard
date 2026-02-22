@@ -17,7 +17,7 @@ async function getEnvironments(
   const { data } = await supabase
     .from("environments")
     .select("id, name, slug, commit_ceiling")
-    .order("name");
+    .order("display_order");
   return (data as Environment[]) ?? [];
 }
 
