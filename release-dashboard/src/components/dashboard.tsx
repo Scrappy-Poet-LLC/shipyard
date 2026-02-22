@@ -234,19 +234,6 @@ export function Dashboard({
 
               <div className="h-5 w-px bg-gray-300" />
 
-              <button
-                onClick={async () => {
-                  const supabase = createSupabaseBrowserClient();
-                  await supabase.auth.signOut();
-                  router.push("/login");
-                }}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-500 shadow-sm transition hover:bg-gray-50 hover:text-gray-700"
-              >
-                Sign out
-              </button>
-
-              <div className="h-5 w-px bg-gray-300" />
-
               <div className="flex items-center gap-2">
                 <label
                   htmlFor="env-select"
@@ -394,6 +381,19 @@ export function Dashboard({
           </div>
         )}
       </main>
+
+      <footer className="fixed bottom-4 left-4">
+        <button
+          onClick={async () => {
+            const supabase = createSupabaseBrowserClient();
+            await supabase.auth.signOut();
+            router.push("/login");
+          }}
+          className="text-xs text-gray-400 transition hover:text-gray-600"
+        >
+          Sign out
+        </button>
+      </footer>
     </div>
   );
 }
