@@ -366,7 +366,7 @@ export function Dashboard({
               return (
                 <div
                   key={`${activeEnv}-${deployment.service_id}`}
-                  className="transition-all duration-200"
+                  className="min-w-0 overflow-hidden transition-all duration-200"
                   style={{
                     transform: hasQuery && isMatch ? "scale(1.02)" : undefined,
                     opacity: hasQuery && !isMatch ? 0.35 : 1,
