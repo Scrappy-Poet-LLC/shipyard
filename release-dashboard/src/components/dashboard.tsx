@@ -1,0 +1,303 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { DeploymentInfo, Environment, LayoutOption, SortOption } from "@/lib/types";
+import { moveFailuresToBottom, getMatchedServiceIds, sortDeployments } from "@/lib/deployments";
+import { useDeploymentData } from "@/hooks/use-deployment-data";
+import { useSearchShortcut } from "@/hooks/use-search-shortcut";
+import { useUrlSync } from "@/hooks/use-url-sync";
+import { ServiceCard } from "./service-card";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { timeAgo } from "@/lib/time";
+
+type DashboardProps = {
+  deployments: DeploymentInfo[];
+  environments: Environment[];
+  currentEnvironment: string;
+  currentSort: SortOption;
+  currentLayout: LayoutOption;
+};
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: "deployed", label: "Last Deployed" },
+  { value: "alpha", label: "Alphabetical" },
+  { value: "staleness", label: "Staleness" },
+];
+
+export function Dashboard({
+  deployments: initialDeployments,
+  environments,
+  currentEnvironment,
+  currentSort,
+  currentLayout,
+}: DashboardProps) {
+  const [, setTick] = useState(0);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const updateUrl = useUrlSync();
+  const {
+    deployments,
+    activeEnv,
+    loading,
+    lastFetched,
+    handleEnvironmentChange: changeEnvironment,
+    handleRefresh,
+  } = useDeploymentData(initialDeployments, currentEnvironment);
+
+  const [activeSort, setActiveSort] = useState<SortOption>(currentSort);
+  const [activeLayout, setActiveLayout] = useState<LayoutOption>(currentLayout);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useSearchShortcut(searchInputRef);
+
+  const router = useRouter();
+
+  const handleEnvironmentChange = useCallback(
+    (slug: string) => changeEnvironment(slug, updateUrl),
+    [changeEnvironment, updateUrl]
+  );
+
+  function handleSortChange(sort: SortOption) {
+    setActiveSort(sort);
+    document.cookie = `sort=${sort};path=/;max-age=31536000`;
+    updateUrl({ sort });
+  }
+
+  function handleLayoutChange(layout: LayoutOption) {
+    setActiveLayout(layout);
+    document.cookie = `layout=${layout};path=/;max-age=31536000`;
+    updateUrl({ layout });
+  }
+
+  const sortedDeployments = useMemo(
+    () => moveFailuresToBottom(sortDeployments(deployments, activeSort)),
+    [deployments, activeSort]
+  );
+
+  const matchedIds = useMemo(
+    () => getMatchedServiceIds(sortedDeployments, searchQuery),
+    [sortedDeployments, searchQuery]
+  );
+
+  const envName =
+    environments.find((e) => e.slug === activeEnv)?.name ?? activeEnv;
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm dark:border-gray-700 dark:bg-slate-900/80">
+        <div className="relative mx-auto max-w-7xl px-4 py-3 sm:px-6 md:pr-48 lg:px-8 lg:pr-52">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <h1 className="whitespace-nowrap text-lg font-bold text-gray-900 sm:text-xl dark:text-gray-100">
+                Release Dashboard
+              </h1>
+              <button
+                onClick={handleRefresh}
+                disabled={loading}
+                title="Refresh deployment data"
+                className="flex-shrink-0 rounded-lg border border-gray-300 bg-white p-1.5 text-gray-400 shadow-sm transition hover:bg-gray-50 hover:text-gray-600 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+              </button>
+              <span className="hidden whitespace-nowrap text-xs text-gray-400 sm:inline dark:text-gray-500">
+                Fetched {timeAgo(lastFetched.toISOString())}
+              </span>
+            </div>
+            <div
+              className="absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-xl border-2 border-gray-300 bg-gray-100 px-5 py-2.5 text-xl font-bold uppercase tracking-wider text-gray-800 shadow-md md:block sm:right-6 lg:right-8 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+              aria-label={`Environment: ${envName}`}
+            >
+              {envName}
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="relative flex-grow sm:flex-grow-0">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      searchInputRef.current?.blur();
+                    }
+                  }}
+                  placeholder="Find service..."
+                className="w-full rounded-lg border border-gray-300 bg-white py-1.5 pl-8 pr-3 text-sm text-gray-700 shadow-sm placeholder:text-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 sm:w-40 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:border-green-400 dark:focus:ring-green-400/20"
+              />
+            </div>
+
+            <select
+              id="env-select"
+              value={activeEnv}
+              onChange={(e) => handleEnvironmentChange(e.target.value)}
+              disabled={loading}
+              aria-label="Environment"
+              className="select-chevron rounded-lg border border-gray-300 bg-white py-1.5 pl-3 text-sm font-medium text-gray-700 shadow-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-green-400 dark:focus:ring-green-400/20"
+            >
+              {environments.map((env) => (
+                <option key={env.slug} value={env.slug}>
+                  {env.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              id="sort-select"
+              value={activeSort}
+              onChange={(e) =>
+                handleSortChange(e.target.value as SortOption)
+              }
+              aria-label="Sort"
+              className="select-chevron rounded-lg border border-gray-300 bg-white py-1.5 pl-3 text-sm font-medium text-gray-700 shadow-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-green-400 dark:focus:ring-green-400/20"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+
+            <div className="hidden items-center gap-1 lg:flex">
+              <button
+                onClick={() => handleLayoutChange("compact")}
+                title="Compact (3 columns)"
+                className={`rounded-md p-1.5 transition ${activeLayout === "compact" ? "bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200" : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"}`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h4v14H4zM10 5h4v14h-4zM16 5h4v14h-4z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => handleLayoutChange("comfortable")}
+                title="Comfortable (2 columns)"
+                className={`rounded-md p-1.5 transition ${activeLayout === "comfortable" ? "bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200" : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"}`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h6v14H4zM14 5h6v14h-6z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {loading ? (
+          <div className={`grid gap-4 sm:grid-cols-1 ${activeLayout === "compact" ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-2"}`}>
+            {Array.from({ length: Math.max(sortedDeployments.length, 4) }).map((_, i) => (
+              <div
+                key={i}
+                className="relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+              >
+                <div className="absolute inset-y-0 left-0 w-1.5 animate-pulse bg-gray-200 dark:bg-gray-600" />
+                <div className="py-5 pl-6 pr-5">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2">
+                      <div className="h-5 w-40 animate-pulse rounded bg-gray-200 dark:bg-gray-600" />
+                      <div className="h-3 w-56 animate-pulse rounded bg-gray-100 dark:bg-gray-700" />
+                    </div>
+                    <div className="h-6 w-20 animate-pulse rounded-full bg-gray-200 dark:bg-gray-600" />
+                  </div>
+                  <div className="mt-4 grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <div className="h-3 w-12 animate-pulse rounded bg-gray-100 dark:bg-gray-700" />
+                      <div className="h-4 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-600" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-3 w-12 animate-pulse rounded bg-gray-100 dark:bg-gray-700" />
+                      <div className="h-4 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-600" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-3 w-16 animate-pulse rounded bg-gray-100 dark:bg-gray-700" />
+                      <div className="h-4 w-14 animate-pulse rounded bg-gray-200 dark:bg-gray-600" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : sortedDeployments.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="mb-4 text-4xl text-gray-300 dark:text-gray-600">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-2.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+            </div>
+            <h2 className="text-lg font-semibold text-gray-600 dark:text-gray-400">
+              No services found
+            </h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-500">
+              No services are configured for this environment.
+            </p>
+          </div>
+        ) : (
+          <div className={`grid gap-4 sm:grid-cols-1 ${activeLayout === "compact" ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-2"}`}>
+            {sortedDeployments.map((deployment) => {
+              const isMatch = matchedIds === null || matchedIds.has(deployment.service_id);
+              const hasQuery = matchedIds !== null;
+              return (
+                <div
+                  key={`${activeEnv}-${deployment.service_id}`}
+                  className="min-w-0 overflow-hidden transition-all duration-200"
+                  style={{
+                    transform: hasQuery && isMatch ? "scale(1.02)" : undefined,
+                    opacity: hasQuery && !isMatch ? 0.35 : 1,
+                  }}
+                >
+                  <ServiceCard
+                    deployment={deployment}
+                    environmentSlug={activeEnv}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
+
+      <footer className="mx-auto max-w-7xl px-4 pb-6 sm:px-6 lg:px-8">
+        <button
+          onClick={async () => {
+            const supabase = createSupabaseBrowserClient();
+            await supabase.auth.signOut();
+            router.push("/login");
+          }}
+          className="text-xs text-gray-400 transition hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
+        >
+          Sign out
+        </button>
+      </footer>
+    </div>
+  );
+}
