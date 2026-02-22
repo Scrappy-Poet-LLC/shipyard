@@ -21,6 +21,15 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "staleness", label: "Staleness" },
 ];
 
+function fuzzyMatch(query: string, target: string): boolean {
+  const lower = target.toLowerCase();
+  let qi = 0;
+  for (let i = 0; i < lower.length && qi < query.length; i++) {
+    if (lower[i] === query[qi]) qi++;
+  }
+  return qi === query.length;
+}
+
 function sortDeployments(
   deployments: DeploymentInfo[],
   sort: SortOption
@@ -73,6 +82,7 @@ export function Dashboard({
   const [activeLayout, setActiveLayout] = useState<LayoutOption>(currentLayout);
   const [loading, setLoading] = useState(false);
   const [lastFetched, setLastFetched] = useState<Date>(new Date());
+  const [searchQuery, setSearchQuery] = useState("");
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -156,10 +166,25 @@ export function Dashboard({
     [deployments, activeSort]
   );
 
+  const normalizedQuery = searchQuery.toLowerCase().trim();
+  const matchedIds = useMemo(() => {
+    if (!normalizedQuery) return null;
+    const ids = new Set<string>();
+    for (const d of sortedDeployments) {
+      if (
+        fuzzyMatch(normalizedQuery, d.display_name) ||
+        fuzzyMatch(normalizedQuery, d.github_repo)
+      ) {
+        ids.add(d.service_id);
+      }
+    }
+    return ids;
+  }, [sortedDeployments, normalizedQuery]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <h1 className="text-xl font-bold text-gray-900">
@@ -192,6 +217,28 @@ export function Dashboard({
             </div>
 
             <div className="flex items-center gap-3">
+              <div className="relative">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Find service..."
+                  className="w-40 rounded-lg border border-gray-300 bg-white py-1.5 pl-8 pr-3 text-sm text-gray-700 shadow-sm placeholder:text-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+                />
+              </div>
+
+              <div className="h-5 w-px bg-gray-300" />
+
               <button
                 onClick={async () => {
                   const supabase = createSupabaseBrowserClient();
@@ -330,13 +377,25 @@ export function Dashboard({
           </div>
         ) : (
           <div className={`grid gap-4 sm:grid-cols-1 ${activeLayout === "compact" ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-2"}`}>
-            {sortedDeployments.map((deployment) => (
-              <ServiceCard
-                key={`${activeEnv}-${deployment.service_id}`}
-                deployment={deployment}
-                environmentSlug={activeEnv}
-              />
-            ))}
+            {sortedDeployments.map((deployment) => {
+              const isMatch = matchedIds === null || matchedIds.has(deployment.service_id);
+              const hasQuery = matchedIds !== null;
+              return (
+                <div
+                  key={`${activeEnv}-${deployment.service_id}`}
+                  className="transition-all duration-200"
+                  style={{
+                    transform: hasQuery && isMatch ? "scale(1.02)" : undefined,
+                    opacity: hasQuery && !isMatch ? 0.35 : 1,
+                  }}
+                >
+                  <ServiceCard
+                    deployment={deployment}
+                    environmentSlug={activeEnv}
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
       </main>
