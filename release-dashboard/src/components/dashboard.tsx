@@ -21,13 +21,8 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "staleness", label: "Staleness" },
 ];
 
-function fuzzyMatch(query: string, target: string): boolean {
-  const lower = target.toLowerCase();
-  let qi = 0;
-  for (let i = 0; i < lower.length && qi < query.length; i++) {
-    if (lower[i] === query[qi]) qi++;
-  }
-  return qi === query.length;
+function searchMatch(query: string, target: string): boolean {
+  return target.toLowerCase().includes(query);
 }
 
 function sortDeployments(
@@ -172,8 +167,8 @@ export function Dashboard({
     const ids = new Set<string>();
     for (const d of sortedDeployments) {
       if (
-        fuzzyMatch(normalizedQuery, d.display_name) ||
-        fuzzyMatch(normalizedQuery, d.github_repo)
+        searchMatch(normalizedQuery, d.display_name) ||
+        searchMatch(normalizedQuery, d.github_repo)
       ) {
         ids.add(d.service_id);
       }
