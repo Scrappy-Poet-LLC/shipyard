@@ -4,17 +4,20 @@
  *
  * Uses HSL interpolation for a natural-looking progression:
  * green -> yellow-green -> yellow -> amber -> pale brown
+ *
+ * @param dark - When true, uses a palette tuned for dark backgrounds (higher
+ * saturation, adjusted lightness) so the gradient remains legible on dark cards.
  */
-export function getStalenessColor(score: number): string {
+export function getStalenessColor(score: number, dark = false): string {
   const clamped = Math.max(0, Math.min(1, score));
 
   const freshHue = 142;
-  const freshSat = 71;
-  const freshLight = 45;
+  const freshSat = dark ? 72 : 71;
+  const freshLight = dark ? 48 : 45;
 
   const staleHue = 30;
-  const staleSat = 40;
-  const staleLight = 59;
+  const staleSat = dark ? 55 : 40;
+  const staleLight = dark ? 58 : 59;
 
   const h = Math.round(freshHue + (staleHue - freshHue) * clamped);
   const s = Math.round(freshSat + (staleSat - freshSat) * clamped);
