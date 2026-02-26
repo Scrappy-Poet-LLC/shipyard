@@ -58,7 +58,12 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
               {retrying ? "Retrying..." : "Retry"}
             </button>
           </div>
-          <p className="mt-2 truncate text-xs text-red-500 dark:text-red-400">{data.error}</p>
+          <p
+            className="mt-2 truncate text-xs text-red-500 dark:text-red-400"
+            title={data.error}
+          >
+            {data.error}
+          </p>
         </div>
       </div>
     );
@@ -102,10 +107,16 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
       <div className="py-4 pl-5 pr-4 sm:py-5 sm:pl-6 sm:pr-5">
         <div className="flex items-start justify-between">
           <div className="min-w-0 flex-1">
-            <h3 className="truncate font-semibold text-gray-900 transition-colors group-hover:text-blue-600 dark:text-gray-100 dark:group-hover:text-blue-400">
+            <h3
+              className="truncate font-semibold text-gray-900 transition-colors group-hover:text-blue-600 dark:text-gray-100 dark:group-hover:text-blue-400"
+              title={data.display_name}
+            >
               {data.display_name}
             </h3>
-            <p className="mt-0.5 truncate text-xs font-mono text-gray-500 dark:text-gray-400">
+            <p
+              className="mt-0.5 truncate text-xs font-mono text-gray-500 dark:text-gray-400"
+              title={data.github_repo}
+            >
               {data.github_repo}
             </p>
           </div>
@@ -136,7 +147,10 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
             <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
               Author
             </p>
-            <p className="mt-1 truncate text-sm text-gray-800 dark:text-gray-200">
+            <p
+              className="mt-1 truncate text-sm text-gray-800 dark:text-gray-200"
+              title={data.commit_author ?? undefined}
+            >
               {data.commit_author ?? "—"}
             </p>
           </div>
@@ -153,7 +167,10 @@ export function ServiceCard({ deployment, environmentSlug }: ServiceCardProps) {
         <div className="mt-3 flex items-center justify-between gap-3">
           {data.branch ? (
             <div className="min-w-0 flex-1">
-              <span className="inline-block max-w-full truncate rounded-md bg-gray-100 px-2 py-0.5 text-xs font-mono text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+              <span
+                className="inline-block max-w-full truncate rounded-md bg-gray-100 px-2 py-0.5 text-xs font-mono text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                title={data.branch}
+              >
                 {data.branch}
               </span>
             </div>
